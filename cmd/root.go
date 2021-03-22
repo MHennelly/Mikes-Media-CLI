@@ -34,7 +34,9 @@ var rootCmd = &cobra.Command{
 	Long: `Media CLI which downloads & plays media files`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
+	/*Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println(viper.GetString("CLI_ID"))
+	},*/
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -55,6 +57,7 @@ func init() {
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -78,4 +81,5 @@ func initConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
 	}
+
 }
