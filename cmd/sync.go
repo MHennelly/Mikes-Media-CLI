@@ -50,7 +50,7 @@ func init() {
 	rootCmd.AddCommand(syncCmd)
 
 	// Here you will define your flags and configuration settings.
-	godotenv.Load()
+	godotenv.Load(os.Getenv("HOME") + "/Projects/Mikes-Media-CLI/.env")
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:

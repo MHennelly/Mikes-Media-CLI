@@ -22,10 +22,13 @@ import (
 	"os"
 	"os/exec"
 	"encoding/json"
+	"io"
 	"io/ioutil"
 	ui "github.com/gizak/termui/v3"
 	"github.com/gizak/termui/v3/widgets"
 	"strings"
+	"math/rand"
+	"time"
 )
 
 // playCmd represents the play command
@@ -57,6 +60,7 @@ func init() {
 
 
 func play() {
+	
 	if err := ui.Init(); err != nil {
 		log.Fatalf("failed to initialize termui: %v", err)
 	}
@@ -95,15 +99,23 @@ func play() {
 	}
 
 	ID := 0
+	var stdin io.WriteCloser
+	var cmd *exec.Cmd
+
+	rand.Seed(time.Now().UnixNano())
 
 	ui.Render(l, p)
 
 	previousKey := ""
 	uiEvents := ui.PollEvents()
+	
 	for {
 		e := <-uiEvents
 		switch e.ID {
 		case "q", "<C-c>":
+			if cmd != nil {
+				cmd.Process.Kill()
+			}
 			return
 		case "j", "<Down>":
 			l.ScrollDown()
@@ -122,17 +134,26 @@ func play() {
 			l.ScrollBottom()
 			ID = len(arr) - 1
 		case "<Enter>":
+			if cmd != nil {
+				stdin.Close()
+				cmd.Process.Kill()
+			}
 			segments := strings.Split(arr[ID].URL, "/")
 			path := os.Getenv("STORAGE") + segments[len(segments) - 1]
-			fmt.Println(path)
-			cmd := exec.Command("lollypop", path)
+			//shuffle_rest_cmd := ";mpg123 -Z " + os.Getenv("STORAGE") + "*.mp3"
+			cmd = exec.Command("mpg123", path)//, shuffle_rest_cmd)
+			stdin, _ = cmd.StdinPipe()
 			p.Text = fmt.Sprintf("Playing [%d] | %s - %s ...", ID, arr[ID].Name, arr[ID].Artist)
-			cmd.Run()
+			go cmd.Run()
 		case "<Resize>":
 			payload := e.Payload.(ui.Resize)
 			grid.SetRect(0, 0, payload.Width, payload.Height)
 			ui.Clear()
 			ui.Render(grid)
+		case "f":
+			if stdin != nil {
+				io.WriteString(stdin, "f\n")
+			}
 		}
 
 		if previousKey == "g" {
@@ -140,7 +161,7 @@ func play() {
 		} else {
 			previousKey = e.ID
 		}
-
+		
 		ui.Render(l,p)
-	}	
+	}
 }
